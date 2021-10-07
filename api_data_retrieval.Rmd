@@ -12,8 +12,6 @@ library(dataRetrieval)
 library(tidyverse)
 library(metajam)
 library(here)
-
-
 ```
 
 ### Pull water data using USGS API and `dataRetrieval` package
@@ -80,13 +78,21 @@ household_language_list <- metajam::read_d1_files("/Users/petermenzies/Downloads
 ## csv file didn't show up in the list read in by read_d1_files() ?
 household_language <- read_csv(here("household_language.csv"))
 
-## Finding the average percent of English only speaking households by year at the state level
 household_lang_eng <- household_language %>% 
+  filter(Year >= 2009 & Year <= 2015) %>% 
+  group_by(Year) %>% 
+  summarize(percent = (mean(speak_only_english, na.rm = T)) / (mean(total, na.rm = T)) * 100)
+
+ggplot(household_lang_eng, aes(x = Year, y = percent)) +
+  geom_line()
+
+## Finding the average percent of English only speaking households by year and region
+household_lang_eng_region <- household_language %>% 
   filter(Year >= 2009 & Year <= 2015) %>% 
   group_by(Year, SASAP.Region) %>% 
   summarize(percent = (mean(speak_only_english, na.rm = T)) / (mean(total, na.rm = T)) * 100)
 
-ggplot(household_lang_eng, aes(x = Year, y = percent)) +
+ggplot(household_lang_eng_region, aes(x = Year, y = percent)) +
   geom_line(aes(color = SASAP.Region))
 ```
 
