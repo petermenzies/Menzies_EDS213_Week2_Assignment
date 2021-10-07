@@ -1,0 +1,92 @@
+---
+title: "Assignment 2 - API Data Retrieval"
+author: "Peter Menzies"
+date: "10/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dataRetrieval)
+library(tidyverse)
+library(metajam)
+library(here)
+
+
+```
+
+### Pull water data using USGS API and `dataRetrieval` package
+
+```{r}
+## Defining objects related to Ventura and Santa Paula Creek discharge based on USGS data-naming system
+## Multiple sites can be requested by using a character vector for the sitNumbers argument
+siteNumber <- c("11118500", "11113500")
+parameterCd <- "00060"  # Discharge
+startDate <- "2019-10-01"  
+endDate <- "2021-10-07" 
+```
+
+```{r, eval=FALSE}
+## Requesting data from USGS API using dataRetrieval::readNWISdv() and storing resultant dataframe
+discharge <- readNWISdv(siteNumber, 
+                    parameterCd, startDate, endDate) %>% 
+  rename("discharge" = "X_00060_00003") %>% 
+  mutate(site = case_when(
+    site_no == "11118500" ~ "Ventura",
+    site_no == "11113500" ~ "Santa_Paula"
+  ))
+
+discharge_ventura <- discharge %>% 
+  filter(site == "Ventura") %>%
+  filter(Date <= "2020-10-05")
+
+discharge_oct <- discharge %>% 
+  filter(Date >= "2021-10-01")
+  
+```
+
+### Plotting results **CHECK RESULTS AGAIN TO FIND PEAK**
+
+```{r}
+discharge_plot_oct <- ggplot(discharge_oct, aes(x = Date, y = discharge)) +
+  geom_line(aes(color = site))
+
+discharge_plot_oct
+
+discharge_plot_ventura <- ggplot(discharge_ventura, aes(x = Date, y = discharge)) +
+  geom_line()
+
+discharge_plot_ventura
+```
+
+### Downloading dataOne data using `metajam::download_d1_data()`
+
+```{r, eval=FALSE}
+## Storing URL to raw data and desired local file destination as objects to use as arguments in our download_d1_data() function
+data_obj <- "https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A7fc6f6db-c5ea-426a-a743-1f2edafb43b8"
+path <- "~/Downloads"
+```
+
+```{r, eval=FALSE}
+## Requesting and downloading dataOne data using metajam
+download_d1_data(data_obj, path)
+```
+
+```{r}
+## Reading in contents of downloaded folder as list
+household_language_list <- metajam::read_d1_files("/Users/petermenzies/Downloads/doi_10.5063_F1CJ8BPH__household_language__csv")
+
+## csv file didn't show up in the list read in by read_d1_files() ?
+household_language <- read_csv(here("household_language.csv"))
+
+## Finding the average percent of English only speaking households by year at the state level
+household_lang_eng <- household_language %>% 
+  filter(Year >= 2009 & Year <= 2015) %>% 
+  group_by(Year, SASAP.Region) %>% 
+  summarize(percent = (mean(speak_only_english, na.rm = T)) / (mean(total, na.rm = T)) * 100)
+
+ggplot(household_lang_eng, aes(x = Year, y = percent)) +
+  geom_line(aes(color = SASAP.Region))
+```
+
