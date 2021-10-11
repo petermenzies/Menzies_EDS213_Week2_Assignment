@@ -38,25 +38,43 @@ discharge <- readNWISdv(siteNumber,
 discharge_ventura <- discharge %>% 
   filter(site == "Ventura") %>%
   filter(Date <= "2020-10-05")
-
-discharge_oct <- discharge %>% 
-  filter(Date >= "2021-10-01")
-  
 ```
 
-### Plotting results **CHECK RESULTS AGAIN TO FIND PEAK**
+```{r}
+## Retrieving hourly discharge using readNWISuv() to find peak times after Oct 4 rain event
+startDate2 <- "2021-10-04" 
+endDate2 <- "2021-10-05"
+
+discharge_oct4 <- readNWISuv(siteNumber, parameterCd, startDate2, endDate2) %>% 
+  rename("discharge" = "X_00060_00000") %>% 
+  mutate(site = case_when(
+    site_no == "11118500" ~ "Ventura",
+    site_no == "11113500" ~ "Santa_Paula"
+  ))
+```
+
+### Plotting results 
 
 ```{r}
-discharge_plot_oct <- ggplot(discharge_oct, aes(x = Date, y = discharge)) +
+discharge_plot_oct4 <- ggplot(discharge_oct4, aes(x = dateTime, y = discharge)) +
   geom_line(aes(color = site))
 
-discharge_plot_oct
+discharge_plot_oct4
 
 discharge_plot_ventura <- ggplot(discharge_ventura, aes(x = Date, y = discharge)) +
   geom_line()
 
 discharge_plot_ventura
+
+max_dis_vent <- discharge_oct4 %>% 
+  filter(site_no == 11118500) %>% 
+  filter(discharge == max(discharge))
+
+max_dis_paula <- discharge_oct4 %>% 
+  filter(site_no == 11113500) %>% 
+  filter(discharge == max(discharge))
 ```
+Based on the plot we created, and taking a look at the maximum discharge values around the Oct 4 rain event, it looks like discharge in Ventura peaked from around 7:30am to 5pm on Oct 5, whereas Santa Paula discharge peaked from around 10:30am to 11:15am that day.
 
 ### Downloading dataOne data using `metajam::download_d1_data()`
 
@@ -78,6 +96,7 @@ household_language_list <- metajam::read_d1_files("/Users/petermenzies/Downloads
 ## csv file didn't show up in the list read in by read_d1_files() ?
 household_language <- read_csv(here("household_language.csv"))
 
+## Finding the average percent of English only speaking households in Alaska by year
 household_lang_eng <- household_language %>% 
   filter(Year >= 2009 & Year <= 2015) %>% 
   group_by(Year) %>% 
@@ -86,7 +105,7 @@ household_lang_eng <- household_language %>%
 ggplot(household_lang_eng, aes(x = Year, y = percent)) +
   geom_line()
 
-## Finding the average percent of English only speaking households by year and region
+## Finding the average percent of English only speaking households by year and region (out of curiosity)
 household_lang_eng_region <- household_language %>% 
   filter(Year >= 2009 & Year <= 2015) %>% 
   group_by(Year, SASAP.Region) %>% 
