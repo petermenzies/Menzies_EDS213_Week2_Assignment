@@ -18,7 +18,7 @@ library(here)
 
 ```{r}
 ## Defining objects related to Ventura and Santa Paula Creek discharge based on USGS data-naming system
-## Multiple sites can be requested by using a character vector for the sitNumbers argument
+## Multiple sites can be requested by using a character vector for the siteNumbers argument
 siteNumber <- c("11118500", "11113500")
 parameterCd <- "00060"  # Discharge
 startDate <- "2019-10-01"  
