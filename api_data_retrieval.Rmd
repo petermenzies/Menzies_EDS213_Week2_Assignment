@@ -25,7 +25,7 @@ startDate <- "2019-10-01"
 endDate <- "2021-10-07" 
 ```
 
-```{r, eval=FALSE}
+```{r}
 ## Requesting data from USGS API using dataRetrieval::readNWISdv() and storing resultant dataframe
 discharge <- readNWISdv(siteNumber, 
                     parameterCd, startDate, endDate) %>% 
@@ -90,11 +90,13 @@ download_d1_data(data_obj, path)
 ```
 
 ```{r}
-## Reading in contents of downloaded folder as list
-household_language_list <- metajam::read_d1_files("/Users/petermenzies/Downloads/doi_10.5063_F1CJ8BPH__household_language__csv")
+## Reading in contents of downloaded folder as list using metajam::read_d1_files()
+household_language_list <- read_d1_files("/Users/petermenzies/MEDS/Fall_Quarter/EDS_213_Meta/doi_10.5063_F1CJ8BPH__household_language__csv 11-08-26-899.5063_F1CJ8BPH__household_language__csv")
 
-## csv file didn't show up in the list read in by read_d1_files() ?
-household_language <- read_csv(here("household_language.csv"))
+household_language <- household_language_list$data
+
+## Read in metadata
+household_lang_metadata <- household_language_list$attribute_metadata
 
 ## Finding the average percent of English only speaking households in Alaska by year
 household_lang_eng <- household_language %>% 
